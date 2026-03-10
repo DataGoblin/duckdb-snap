@@ -5,6 +5,10 @@ on:
     - cron: '0 6 * * *' # Daily at 6am UTC
   workflow_dispatch: # Allow manual trigger
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -49,8 +53,18 @@ jobs:
           echo "Updated snapcraft.yaml:"
           cat snap/snapcraft.yaml
 
-      - name: Create pull request
+      - name: Check for existing PR
         if: steps.current.outputs.version != steps.latest.outputs.version
+        id: check_pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LATEST: ${{ steps.latest.outputs.version }}
+        run: |
+          existing=$(gh pr list --head "update/duckdb-v${LATEST}" --json number --jq 'length')
+          echo "exists=$existing" >> "$GITHUB_OUTPUT"
+
+      - name: Create pull request
+        if: steps.current.outputs.version != steps.latest.outputs.version && steps.check_pr.outputs.exists == '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LATEST: ${{ steps.latest.outputs.version }}
@@ -64,10 +78,8 @@ jobs:
           git push origin "$branch"
           gh pr create \
             --title "Update DuckDB to v${LATEST}" \
-            --body "$(cat <<EOF
-          Automated update to DuckDB v${LATEST}.
+            --body "Automated update to DuckDB v${LATEST}.
 
-          - Updated version, source URL, and SHA256 checksum in snapcraft.yaml
-          - Release: https://github.com/duckdb/duckdb/releases/tag/v${LATEST}
-          EOF
-          )"
+          Updated version, source URL, and SHA256 checksum in snapcraft.yaml.
+
+          Release: https://github.com/duckdb/duckdb/releases/tag/v${LATEST}"

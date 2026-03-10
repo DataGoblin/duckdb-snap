@@ -1,0 +1,8 @@
+*.snap
+*.snap.log
+snapcraft-*.txt
+parts/
+prime/
+stage/
+.*/
+!.github/

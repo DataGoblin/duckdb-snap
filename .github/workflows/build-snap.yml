@@ -1,0 +1,38 @@
+name: Build and publish snap
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'snap/snapcraft.yaml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install snapcraft
+        run: sudo snap install snapcraft --classic
+
+      - name: Build snap (remote-build for multi-arch)
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        run: |
+          snapcraft remote-build --launchpad-accept-public-upload
+
+      - name: Upload snap artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: snaps
+          path: '*.snap'
+
+      - name: Publish to Snap Store
+        if: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS != '' }}
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        run: |
+          for snap_file in *.snap; do
+            snapcraft upload "$snap_file" --release=stable
+          done

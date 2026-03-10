@@ -1,0 +1,59 @@
+name: duckdb
+base: core24
+version: '1.5.0'
+summary: Fast in-process analytical database
+description: |
+  DuckDB is an in-process SQL OLAP database management system designed to
+  support analytical query workloads. It provides a rich SQL dialect with
+  deep integrations for Python, R, Java, and more.
+  This snap packages the DuckDB CLI shell, built from source.
+
+  Source: https://github.com/duckdb/duckdb
+  Snap source: https://github.com/bear/duckdb-snap
+license: MIT
+grade: stable
+confinement: strict
+
+platforms:
+  amd64:
+  arm64:
+
+apps:
+  duckdb:
+    command: usr/bin/duckdb
+    plugs:
+      - home
+      - removable-media
+      - network
+      - network-bind
+
+parts:
+  duckdb:
+    plugin: cmake
+    source: https://github.com/duckdb/duckdb/archive/refs/tags/v1.5.0.tar.gz
+    source-checksum: sha256/fb039699c5a91dec9876540aed7904b6b4e713b800014840dbf641168147a556
+    cmake-generator: Ninja
+    cmake-parameters:
+      - -DCMAKE_INSTALL_PREFIX=/usr
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DBUILD_UNITTESTS=FALSE
+      - -DBUILD_BENCHMARKS=FALSE
+      - -DENABLE_SANITIZER=FALSE
+      - -DENABLE_UBSAN=FALSE
+      - -DBUILD_SHELL=TRUE
+      - -DBUILD_MAIN_DUCKDB_LIBRARY=TRUE
+    override-build: |
+      craftctl default
+      if [ ! -f "$CRAFT_PART_INSTALL/usr/bin/duckdb" ]; then
+        mkdir -p "$CRAFT_PART_INSTALL/usr/bin"
+        cp "$CRAFT_PART_BUILD/duckdb" "$CRAFT_PART_INSTALL/usr/bin/duckdb"
+      fi
+    build-packages:
+      - g++
+      - ninja-build
+      - libssl-dev
+      - libcurl4-openssl-dev
+      - python3
+    stage-packages:
+      - libssl3t64
+      - libcurl4t64

@@ -1,0 +1,73 @@
+name: Check for new DuckDB release
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # Daily at 6am UTC
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get current version from snapcraft.yaml
+        id: current
+        run: |
+          version=$(grep '^version:' snap/snapcraft.yaml | sed "s/version: '//;s/'//")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Get latest DuckDB release
+        id: latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version=$(gh api repos/duckdb/duckdb/releases/latest --jq '.tag_name' | sed 's/^v//')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Update snapcraft.yaml
+        if: steps.current.outputs.version != steps.latest.outputs.version
+        env:
+          CURRENT: ${{ steps.current.outputs.version }}
+          LATEST: ${{ steps.latest.outputs.version }}
+        run: |
+          echo "New release found: v$LATEST (current: v$CURRENT)"
+
+          # Download new tarball and compute checksum
+          checksum=$(curl -sL "https://github.com/duckdb/duckdb/archive/refs/tags/v${LATEST}.tar.gz" | sha256sum | awk '{print $1}')
+          echo "SHA256: $checksum"
+
+          # Update version
+          sed -i "s/^version: '${CURRENT}'/version: '${LATEST}'/" snap/snapcraft.yaml
+
+          # Update source URL
+          sed -i "s|/tags/v${CURRENT}.tar.gz|/tags/v${LATEST}.tar.gz|" snap/snapcraft.yaml
+
+          # Update checksum
+          sed -i "s|source-checksum: sha256/.*|source-checksum: sha256/${checksum}|" snap/snapcraft.yaml
+
+          echo "Updated snapcraft.yaml:"
+          cat snap/snapcraft.yaml
+
+      - name: Create pull request
+        if: steps.current.outputs.version != steps.latest.outputs.version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LATEST: ${{ steps.latest.outputs.version }}
+        run: |
+          branch="update/duckdb-v${LATEST}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add snap/snapcraft.yaml
+          git commit -m "Update DuckDB to v${LATEST}"
+          git push origin "$branch"
+          gh pr create \
+            --title "Update DuckDB to v${LATEST}" \
+            --body "$(cat <<EOF
+          Automated update to DuckDB v${LATEST}.
+
+          - Updated version, source URL, and SHA256 checksum in snapcraft.yaml
+          - Release: https://github.com/duckdb/duckdb/releases/tag/v${LATEST}
+          EOF
+          )"

@@ -17,7 +17,7 @@ description: |
   If you don't need the snap format, consider installing DuckDB directly from the official channels: https://duckdb.org/docs/installation
 
   **Quick start:**
-  `duckdb` to launch the interactive shell, or `duckdb mydata.duckdb` to open a persistent database.
+  `duckdb-cli` to launch the interactive shell, or `duckdb-cli mydata.duckdb` to open a persistent database.
 
   **Links:**
   - DuckDB documentation: https://duckdb.org/docs
@@ -35,7 +35,7 @@ platforms:
   arm64:
 
 apps:
-  duckdb:
+  duckdb-cli:
     command: usr/bin/duckdb
     plugs:
       - home

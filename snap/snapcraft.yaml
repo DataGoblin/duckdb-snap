@@ -52,6 +52,7 @@ parts:
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr
       - -DCMAKE_BUILD_TYPE=Release
+      - -DDUCKDB_EXPLICIT_VERSION=v1.5.0
       - -DBUILD_UNITTESTS=FALSE
       - -DBUILD_BENCHMARKS=FALSE
       - -DENABLE_SANITIZER=FALSE

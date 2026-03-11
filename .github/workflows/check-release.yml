@@ -50,6 +50,9 @@ jobs:
           # Update checksum
           sed -i "s|source-checksum: sha256/.*|source-checksum: sha256/${checksum}|" snap/snapcraft.yaml
 
+          # Update explicit version
+          sed -i "s|-DDUCKDB_EXPLICIT_VERSION=v${CURRENT}|-DDUCKDB_EXPLICIT_VERSION=v${LATEST}|" snap/snapcraft.yaml
+
           echo "Updated snapcraft.yaml:"
           cat snap/snapcraft.yaml
 

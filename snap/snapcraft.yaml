@@ -1,6 +1,6 @@
 name: duckdb-cli
 base: core24
-version: '1.5.3'
+version: '1.5.4'
 summary: Unofficial snap for the DuckDB CLI shell
 description: |
   **Unofficial community snap package for the DuckDB CLI shell, built from source.**
@@ -46,13 +46,13 @@ apps:
 parts:
   duckdb:
     plugin: cmake
-    source: https://github.com/duckdb/duckdb/archive/refs/tags/v1.5.3.tar.gz
-    source-checksum: sha256/f22a7cfb3e72be3010f4a7f2fbdd8de7d62fa036b838543acb663a722a7a71df
+    source: https://github.com/duckdb/duckdb/archive/refs/tags/v1.5.4.tar.gz
+    source-checksum: sha256/99c36e4bf415f295e19ed67401adb72e075e63e6a0dc3a14312c986e29781fd0
     cmake-generator: Ninja
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr
       - -DCMAKE_BUILD_TYPE=Release
-      - -DDUCKDB_EXPLICIT_VERSION=v1.5.3
+      - -DDUCKDB_EXPLICIT_VERSION=v1.5.4
       - -DBUILD_UNITTESTS=FALSE
       - -DBUILD_BENCHMARKS=FALSE
       - -DENABLE_SANITIZER=FALSE
